@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe with Difficulty Levels</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 8px;
+            color: #38bdf8;
+        }
+        .controls {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        label {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        select {
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background-color: #1e293b;
+            color: #f8fafc;
+            outline: none;
+            cursor: pointer;
+        }
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #94a3b8;
+            height: 30px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 8px;
+            background-color: #334155;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .cell {
+            background-color: #1e293b;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            user-select: none;
+        }
+        .cell:hover {
+            background-color: #334155;
+        }
+        .cell.x {
+            color: #38bdf8;
+        }
+        .cell.o {
+            color: #f43f5e;
+        }
+        .restart-btn {
+            margin-top: 24px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #0f172a;
+            background-color: #38bdf8;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .restart-btn:hover {
+            background-color: #7dd3fc;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tic-Tac-Toe</h1>
+
+    <div class="controls">
+        <label for="difficulty">Difficulty:</label>
+        <select id="difficulty" onchange="restartGame()">
+            <option value="beginner">Beginner</option>
+            <option value="moderate">Moderate</option>
+            <option value="hard" selected>Hard (Unbeatable)</option>
+        </select>
+    </div>
+
+    <div class="status" id="status">Your turn (X)</div>
+
+    <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+
+    <button class="restart-btn" onclick="restartGame()">Restart Game</button>
+
+    <script>
+        const PLAYER = 'X';
+        const COMPUTER = 'O';
+        let boardState = Array(9).fill('');
+        let gameActive = true;
+
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.getElementById('status');
+        const difficultySelect = document.getElementById('difficulty');
+
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+
+        function handleCellClick(e) {
+            const index = e.target.getAttribute('data-index');
+
+            if (boardState[index] !== '' || !gameActive) return;
+
+            makeMove(index, PLAYER);
+
+            if (checkGameOver()) return;
+
+            statusText.innerText = "AI is thinking...";
+            gameActive = false;
+
+            setTimeout(() => {
+                const aiMove = getAIMove();
+                makeMove(aiMove, COMPUTER);
+                if (!checkGameOver()) {
+                    statusText.innerText = "Your turn (X)";
+                    gameActive = true;
+                }
+            }, 300);
+        }
+
+        function makeMove(index, symbol) {
+            boardState[index] = symbol;
+            cells[index].innerText = symbol;
+            cells[index].classList.add(symbol.toLowerCase());
+        }
+
+        function checkGameOver() {
+            const winner = checkWinner(boardState);
+            if (winner === PLAYER) {
+                statusText.innerText = "You Win!";
+                gameActive = false;
+                return true;
+            } else if (winner === COMPUTER) {
+                statusText.innerText = "AI Wins!";
+                gameActive = false;
+                return true;
+            } else if (isBoardFull(boardState)) {
+                statusText.innerText = "It's a Draw!";
+                gameActive = false;
+                return true;
+            }
+            return false;
+        }
+
+        function isBoardFull(board) {
+            return board.every(cell => cell !== '');
+        }
+
+        function checkWinner(board) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return board[a];
+                }
+            }
+            return null;
+        }
+
+        // AI Decision Routing based on difficulty
+        function getAIMove() {
+            const level = difficultySelect.value;
+
+            if (level === 'beginner') {
+                return getRandomMove();
+            } else if (level === 'moderate') {
+                // 50% chance Minimax, 50% chance random
+                return Math.random() < 0.5 ? getBestMove() : getRandomMove();
+            } else {
+                // Unbeatable Minimax
+                return getBestMove();
+            }
+        }
+
+        function getRandomMove() {
+            let emptyIndices = [];
+            for (let i = 0; i < 9; i++) {
+                if (boardState[i] === '') emptyIndices.push(i);
+            }
+            const randomIndex = Math.floor(Math.random() * emptyIndices.length);
+            return emptyIndices[randomIndex];
+        }
+
+        // Minimax Algorithm (Hard Level)
+        function getBestMove() {
+            let bestScore = -Infinity;
+            let move = -1;
+
+            for (let i = 0; i < 9; i++) {
+                if (boardState[i] === '') {
+                    boardState[i] = COMPUTER;
+                    let score = minimax(boardState, 0, false);
+                    boardState[i] = '';
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = i;
+                    }
+                }
+            }
+            return move;
+        }
+
+        function minimax(board, depth, isMaximizing) {
+            const winner = checkWinner(board);
+            if (winner === COMPUTER) return 10 - depth;
+            if (winner === PLAYER) return depth - 10;
+            if (isBoardFull(board)) return 0;
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = COMPUTER;
+                        let score = minimax(board, depth + 1, false);
+                        board[i] = '';
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = PLAYER;
+                        let score = minimax(board, depth + 1, true);
+                        board[i] = '';
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        function restartGame() {
+            boardState = Array(9).fill('');
+            gameActive = true;
+            statusText.innerText = "Your turn (X)";
+            cells.forEach(cell => {
+                cell.innerText = '';
+                cell.classList.remove('x', 'o');
+            });
+        }
+    </script>
+</body>
+</html>
